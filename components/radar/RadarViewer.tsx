@@ -16,6 +16,7 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
   const [lastUpdated, setLastUpdated] = useState("--");
   const [layersLoaded, setLayersLoaded] = useState({ bg: false, radar: false, locations: false });
   const [imageKey, setImageKey] = useState(0);
+  const [scanAngle, setScanAngle] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +50,14 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
     return () => clearInterval(interval);
   }, []);
 
+  // Radar sweep animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setScanAngle(prev => (prev + 1) % 360);
+    }, 30);
+    return () => clearInterval(interval);
+  }, []);
+
   // Handle range change
   const handleRangeChange = (newRange: string) => {
     setRange(newRange as "64" | "128" | "256" | "512");
@@ -76,227 +85,282 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[65vh] min-h-[450px] overflow-hidden"
+      className="relative w-full h-[70vh] min-h-[500px] overflow-hidden"
       style={{
-        background: "linear-gradient(180deg, #050508 0%, #0a0a12 50%, #0d0d18 100%)",
+        background: "radial-gradient(ellipse at center, #0c1220 0%, #060a12 50%, #030508 100%)",
       }}
     >
       {/* Atmospheric background effects */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Subtle grid pattern */}
+        {/* Subtle radar grid pattern */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage: `
-              linear-gradient(rgba(100, 150, 255, 0.5) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(100, 150, 255, 0.5) 1px, transparent 1px)
+              radial-gradient(circle at center, transparent 0%, transparent 20%, rgba(59, 130, 246, 0.3) 20.5%, transparent 21%),
+              radial-gradient(circle at center, transparent 0%, transparent 40%, rgba(59, 130, 246, 0.2) 40.5%, transparent 41%),
+              radial-gradient(circle at center, transparent 0%, transparent 60%, rgba(59, 130, 246, 0.15) 60.5%, transparent 61%),
+              radial-gradient(circle at center, transparent 0%, transparent 80%, rgba(59, 130, 246, 0.1) 80.5%, transparent 81%)
             `,
-            backgroundSize: "40px 40px",
+            backgroundSize: "100% 100%",
           }}
         />
         {/* Radial glow from center */}
         <div
           className="absolute inset-0"
           style={{
-            background: "radial-gradient(ellipse at center, rgba(59, 130, 246, 0.08) 0%, transparent 60%)",
-          }}
-        />
-        {/* Corner vignettes */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse at top left, rgba(0,0,0,0.4) 0%, transparent 50%),
-              radial-gradient(ellipse at top right, rgba(0,0,0,0.4) 0%, transparent 50%),
-              radial-gradient(ellipse at bottom left, rgba(0,0,0,0.5) 0%, transparent 50%),
-              radial-gradient(ellipse at bottom right, rgba(0,0,0,0.5) 0%, transparent 50%)
-            `,
+            background: "radial-gradient(ellipse at center, rgba(59, 130, 246, 0.06) 0%, transparent 50%)",
           }}
         />
       </div>
 
       {/* Radar image container - centered with proper aspect ratio */}
-      <div className="absolute inset-0 flex items-center justify-center">
+      <div className="absolute inset-0 flex items-center justify-center pt-8">
         <div
-          className="relative"
+          className="relative rounded-full overflow-hidden"
           style={{
-            width: "min(90vw, 70vh, 600px)",
-            height: "min(90vw, 70vh, 600px)",
+            width: "min(85vw, 65vh, 550px)",
+            height: "min(85vw, 65vh, 550px)",
           }}
         >
-          {/* Background terrain layer */}
-          <img
-            key={`bg-${radarId}-${imageKey}`}
-            src={`/api/radar/${radarId}/layers?type=background`}
-            alt=""
-            className="absolute inset-0 w-full h-full object-contain transition-opacity duration-500"
-            style={{ opacity: layersLoaded.bg ? 0.85 : 0 }}
-            onLoad={() => handleLayerLoad('bg')}
-            onError={() => handleLayerError('background')}
-            draggable={false}
-          />
-
-          {/* Range rings layer */}
-          <img
-            key={`range-${radarId}-${imageKey}`}
-            src={`/api/radar/${radarId}/layers?type=range`}
-            alt=""
-            className="absolute inset-0 w-full h-full object-contain"
-            style={{ opacity: 0.3 }}
-            draggable={false}
-          />
-
-          {/* BOM Animated Radar GIF - The main radar display */}
-          <img
-            key={`radar-${radarId}-${imageKey}`}
-            src={`/api/radar/${radarId}?type=current&t=${imageKey}`}
-            alt="Weather Radar"
-            className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300"
+          {/* Outer ring glow */}
+          <div
+            className="absolute -inset-1 rounded-full pointer-events-none"
             style={{
-              opacity: layersLoaded.radar ? 0.95 : 0,
+              background: "linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.1) 50%, rgba(59, 130, 246, 0.2) 100%)",
+              filter: "blur(8px)",
             }}
-            onLoad={() => handleLayerLoad('radar')}
-            onError={() => handleLayerError('radar')}
-            draggable={false}
           />
 
-          {/* Locations layer (city names) */}
-          <img
-            key={`loc-${radarId}-${imageKey}`}
-            src={`/api/radar/${radarId}/layers?type=locations`}
-            alt=""
-            className="absolute inset-0 w-full h-full object-contain"
-            style={{ opacity: layersLoaded.locations ? 0.95 : 0 }}
-            onLoad={() => handleLayerLoad('locations')}
-            onError={() => handleLayerError('locations')}
-            draggable={false}
-          />
+          {/* Main radar container with circular mask */}
+          <div
+            className="absolute inset-0 rounded-full overflow-hidden"
+            style={{
+              boxShadow: "inset 0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(59, 130, 246, 0.15)",
+            }}
+          >
+            {/* Background terrain layer - enhanced */}
+            <img
+              key={`bg-${radarId}-${imageKey}`}
+              src={`/api/radar/${radarId}/layers?type=background`}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+              style={{
+                opacity: layersLoaded.bg ? 0.7 : 0,
+                filter: "saturate(0.8) brightness(0.9) contrast(1.1)",
+              }}
+              onLoad={() => handleLayerLoad('bg')}
+              onError={() => handleLayerError('background')}
+              draggable={false}
+            />
 
-          {/* Center marker with pulse */}
+            {/* Range rings layer - subtle */}
+            <img
+              key={`range-${radarId}-${imageKey}`}
+              src={`/api/radar/${radarId}/layers?type=range`}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover mix-blend-screen"
+              style={{ opacity: 0.2 }}
+              draggable={false}
+            />
+
+            {/* BOM Animated Radar GIF - Enhanced with filters */}
+            <img
+              key={`radar-${radarId}-${imageKey}`}
+              src={`/api/radar/${radarId}?type=current&t=${imageKey}`}
+              alt="Weather Radar"
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+              style={{
+                opacity: layersLoaded.radar ? 1 : 0,
+                filter: "saturate(1.3) contrast(1.15) brightness(1.05)",
+                mixBlendMode: "screen",
+              }}
+              onLoad={() => handleLayerLoad('radar')}
+              onError={() => handleLayerError('radar')}
+              draggable={false}
+            />
+
+            {/* Locations layer (city names) - enhanced visibility */}
+            <img
+              key={`loc-${radarId}-${imageKey}`}
+              src={`/api/radar/${radarId}/layers?type=locations`}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{
+                opacity: layersLoaded.locations ? 0.9 : 0,
+                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))",
+              }}
+              onLoad={() => handleLayerLoad('locations')}
+              onError={() => handleLayerError('locations')}
+              draggable={false}
+            />
+
+            {/* Animated radar sweep effect */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: `conic-gradient(from ${scanAngle}deg at 50% 50%,
+                  transparent 0deg,
+                  transparent 350deg,
+                  rgba(59, 130, 246, 0.08) 355deg,
+                  rgba(59, 130, 246, 0.15) 358deg,
+                  rgba(59, 130, 246, 0.08) 360deg
+                )`,
+              }}
+            />
+
+            {/* Inner vignette for depth */}
+            <div
+              className="absolute inset-0 pointer-events-none rounded-full"
+              style={{
+                boxShadow: "inset 0 0 100px rgba(0,0,0,0.5)",
+              }}
+            />
+          </div>
+
+          {/* Center marker with enhanced pulse */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
             <div className="relative">
-              <div className="absolute -inset-3 bg-blue-500/30 rounded-full animate-ping" />
-              <div className="absolute -inset-1.5 bg-blue-500/20 rounded-full animate-pulse" />
-              <div className="relative w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-lg shadow-blue-500/50" />
+              <div
+                className="absolute -inset-4 rounded-full animate-ping"
+                style={{
+                  background: "radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%)",
+                  animationDuration: "2s",
+                }}
+              />
+              <div
+                className="absolute -inset-2 rounded-full animate-pulse"
+                style={{
+                  background: "radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)",
+                }}
+              />
+              <div className="relative w-2.5 h-2.5 bg-blue-400 rounded-full border border-white/80 shadow-lg shadow-blue-500/60" />
             </div>
           </div>
 
-          {/* Circular frame/border */}
+          {/* Circular border ring */}
           <div
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 rounded-full pointer-events-none border border-blue-500/20"
             style={{
-              boxShadow: `
-                inset 0 0 80px rgba(0,0,0,0.6),
-                0 0 40px rgba(59, 130, 246, 0.1)
-              `,
+              boxShadow: "inset 0 0 1px rgba(59, 130, 246, 0.5)",
             }}
           />
         </div>
       </div>
 
-      {/* Gradient fade edges */}
+      {/* Gradient fade edges - softer */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#050508] to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0d0d18] to-transparent" />
-        <div className="absolute top-0 bottom-0 left-0 w-16 bg-gradient-to-r from-[#050508]/80 to-transparent" />
-        <div className="absolute top-0 bottom-0 right-0 w-16 bg-gradient-to-l from-[#050508]/80 to-transparent" />
+        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-[#030508] via-[#030508]/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-[#030508] via-[#030508]/50 to-transparent" />
       </div>
 
-      {/* Time indicator badge */}
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20">
-        <div
-          className="px-5 py-2 rounded-full border border-white/10 backdrop-blur-md"
-          style={{
-            background: "linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(20,20,30,0.7) 100%)",
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-white/90 text-sm font-medium tracking-wide">
-              {currentTime}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-                Live
-              </span>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Range selector */}
+      {/* Range selector - top */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
         <RangeSelector value={range} onChange={handleRangeChange} />
       </div>
 
-      {/* City label and attribution */}
-      <div className="absolute bottom-6 right-6 z-20 text-right">
-        <div className="text-white/80 text-sm font-medium tracking-wide">{cityName}</div>
-        <div className="text-white/30 text-[10px] mt-1 tracking-wide">
-          Data: Bureau of Meteorology
-        </div>
-      </div>
-
-      {/* Rain intensity legend */}
-      <div className="absolute bottom-6 left-6 z-20">
-        <div
-          className="px-3 py-2.5 rounded-xl border border-white/10 backdrop-blur-md"
-          style={{
-            background: "linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(20,20,30,0.6) 100%)",
-          }}
-        >
-          <div className="text-white/40 text-[9px] uppercase tracking-wider mb-2">Intensity</div>
-          <div className="flex gap-1">
-            <div className="w-4 h-4 rounded-sm" style={{ background: 'linear-gradient(135deg, #90EE90, #00AA00)' }} title="Light" />
-            <div className="w-4 h-4 rounded-sm" style={{ background: 'linear-gradient(135deg, #FFFF00, #FFD700)' }} title="Moderate" />
-            <div className="w-4 h-4 rounded-sm" style={{ background: 'linear-gradient(135deg, #FFA500, #FF6600)' }} title="Heavy" />
-            <div className="w-4 h-4 rounded-sm" style={{ background: 'linear-gradient(135deg, #FF4444, #CC0000)' }} title="Intense" />
-            <div className="w-4 h-4 rounded-sm" style={{ background: 'linear-gradient(135deg, #FF00FF, #8B008B)' }} title="Extreme" />
-          </div>
-        </div>
-      </div>
-
-      {/* Update indicator */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-        <div
-          className="px-4 py-2 rounded-full border border-white/10 backdrop-blur-md"
-          style={{
-            background: "linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(20,20,30,0.6) 100%)",
-          }}
-        >
-          <span className="text-white/50 text-xs">
-            Updated {lastUpdated}
+      {/* Time and Live indicator - below range selector */}
+      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20">
+        <div className="flex items-center gap-3 px-4 py-1.5">
+          <span className="text-white/70 text-sm font-medium tabular-nums">
+            {currentTime}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+            </span>
+            <span className="text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+              Live
+            </span>
           </span>
         </div>
       </div>
 
-      {/* Loading state */}
+      {/* City label - bottom right */}
+      <div className="absolute bottom-5 right-5 z-20 text-right">
+        <div className="text-white/90 text-base font-semibold tracking-wide">{cityName}</div>
+        <div className="text-white/40 text-[10px] mt-0.5 tracking-wide">
+          Bureau of Meteorology
+        </div>
+      </div>
+
+      {/* Rain intensity legend - redesigned */}
+      <div className="absolute bottom-5 left-5 z-20">
+        <div
+          className="px-3 py-2 rounded-lg border border-white/10 backdrop-blur-sm"
+          style={{
+            background: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <div className="text-white/50 text-[9px] uppercase tracking-wider mb-1.5 font-medium">Rain Intensity</div>
+          <div className="flex gap-0.5">
+            <div className="w-5 h-2 rounded-l-sm" style={{ background: '#00C853' }} />
+            <div className="w-5 h-2" style={{ background: '#FFEB3B' }} />
+            <div className="w-5 h-2" style={{ background: '#FF9800' }} />
+            <div className="w-5 h-2" style={{ background: '#F44336' }} />
+            <div className="w-5 h-2 rounded-r-sm" style={{ background: '#9C27B0' }} />
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-white/40 text-[8px]">Light</span>
+            <span className="text-white/40 text-[8px]">Heavy</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Update indicator - bottom center */}
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20">
+        <span className="text-white/40 text-xs">
+          Updated {lastUpdated}
+        </span>
+      </div>
+
+      {/* Loading state - enhanced */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#050508] z-30">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#030508] z-30">
           <div className="text-center">
-            <div className="relative w-16 h-16 mx-auto">
-              <div className="absolute inset-0 border-2 border-blue-500/30 rounded-full" />
-              <div className="absolute inset-0 border-2 border-transparent border-t-blue-500 rounded-full animate-spin" />
+            <div className="relative w-20 h-20 mx-auto">
+              {/* Outer ring */}
+              <div className="absolute inset-0 border border-blue-500/20 rounded-full" />
+              {/* Spinning ring */}
               <div
-                className="absolute inset-2 border-2 border-transparent border-t-blue-400/50 rounded-full animate-spin"
-                style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}
+                className="absolute inset-0 rounded-full animate-spin"
+                style={{
+                  border: "2px solid transparent",
+                  borderTopColor: "rgba(59, 130, 246, 0.8)",
+                  animationDuration: "1s",
+                }}
               />
+              {/* Inner spinning ring */}
+              <div
+                className="absolute inset-3 rounded-full animate-spin"
+                style={{
+                  border: "2px solid transparent",
+                  borderTopColor: "rgba(59, 130, 246, 0.4)",
+                  animationDuration: "1.5s",
+                  animationDirection: "reverse",
+                }}
+              />
+              {/* Center dot */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              </div>
             </div>
-            <p className="text-white/40 text-sm mt-4 tracking-wide">Loading radar...</p>
+            <p className="text-white/50 text-sm mt-4 tracking-wide">Loading radar...</p>
           </div>
         </div>
       )}
 
       {/* Error state */}
       {error && !isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#050508]/95 z-30">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#030508]/95 z-30">
           <div className="text-center">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
-              <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20">
+              <svg className="w-7 h-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <p className="text-white/60 text-sm">{error}</p>
+            <p className="text-white/70 text-sm font-medium">{error}</p>
             <button
               onClick={() => {
                 setError(null);
@@ -304,7 +368,7 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
                 setIsLoading(true);
                 setLayersLoaded({ bg: false, radar: false, locations: false });
               }}
-              className="mt-4 text-blue-400 text-sm font-medium hover:text-blue-300 transition-colors"
+              className="mt-4 px-4 py-2 text-blue-400 text-sm font-medium hover:text-blue-300 transition-colors rounded-lg border border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/5"
             >
               Try again
             </button>

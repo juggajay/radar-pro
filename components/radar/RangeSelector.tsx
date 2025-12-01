@@ -11,19 +11,35 @@ interface RangeSelectorProps {
 
 export function RangeSelector({ value, onChange }: RangeSelectorProps) {
   return (
-    <div className="flex bg-black/60 backdrop-blur-md rounded-full p-1 border border-white/10">
+    <div
+      className="flex rounded-full p-1 border border-white/10"
+      style={{
+        background: "rgba(0, 0, 0, 0.7)",
+        backdropFilter: "blur(12px)",
+        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+      }}
+    >
       {ranges.map((range) => (
         <button
           key={range}
           onClick={() => onChange(range)}
           className={cn(
-            "px-3 py-1.5 text-sm rounded-full transition-all",
+            "relative px-3.5 py-1.5 text-sm rounded-full transition-all duration-200",
             value === range
-              ? "bg-[#3b82f6] text-white font-medium"
-              : "text-[#a0a0b0] hover:text-white"
+              ? "text-white font-medium"
+              : "text-white/50 hover:text-white/80"
           )}
         >
-          {range}km
+          {value === range && (
+            <span
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                boxShadow: "0 2px 8px rgba(59, 130, 246, 0.4)",
+              }}
+            />
+          )}
+          <span className="relative">{range}km</span>
         </button>
       ))}
     </div>
