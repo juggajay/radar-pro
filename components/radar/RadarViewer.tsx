@@ -118,7 +118,7 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
       </div>
 
       {/* Radar image container - centered with proper aspect ratio */}
-      <div className="absolute inset-0 flex items-center justify-center pt-8">
+      <div className="absolute inset-0 flex items-center justify-center pt-8 pointer-events-none">
         <div
           className="relative rounded-2xl overflow-hidden"
           style={{
