@@ -22,24 +22,16 @@ export function RangeSelector({ value, onChange }: RangeSelectorProps) {
       {ranges.map((range) => (
         <button
           key={range}
+          type="button"
           onClick={() => onChange(range)}
           className={cn(
-            "relative px-3.5 py-1.5 text-sm rounded-full transition-all duration-200",
+            "relative px-3.5 py-1.5 text-sm rounded-full transition-all duration-200 cursor-pointer z-10",
             value === range
-              ? "text-white font-medium"
+              ? "text-white font-medium bg-gradient-to-br from-[#3b82f6] to-[#2563eb] shadow-[0_2px_8px_rgba(59,130,246,0.4)]"
               : "text-white/50 hover:text-white/80"
           )}
         >
-          {value === range && (
-            <span
-              className="absolute inset-0 rounded-full"
-              style={{
-                background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-                boxShadow: "0 2px 8px rgba(59, 130, 246, 0.4)",
-              }}
-            />
-          )}
-          <span className="relative">{range}km</span>
+          {range}km
         </button>
       ))}
     </div>
