@@ -19,7 +19,7 @@ export default function HomePage() {
     humidity: 65,
     wind: "12km/h NE",
     uvIndex: 6,
-    rainETA: 12,
+    radarId: location.radarId,
   };
 
   return (
