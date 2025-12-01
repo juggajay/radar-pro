@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadarPro UI Design System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. DESIGN VARIABLES --- */
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-gradient: linear-gradient(180deg, #0a0a0f 0%, #12121a 100%);
+            --glass-bg: rgba(30, 30, 40, 0.6); /* Slightly darker glass for legibility */
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-blue: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --text-white: #ffffff;
+            --text-muted: #a0a0b0;
+            --warning-orange: #f59e0b;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+        }
+
+        /* --- 2. RESET & BASE STYLES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000; /* Outer background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-white);
+        }
+
+        /* Simulator Frame (iPhone 15 Pro Dimensions) */
+        .iphone-frame {
+            width: 393px;
+            height: 852px;
+            background: var(--bg-gradient);
+            border-radius: 50px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border: 8px solid #2a2a2a; /* Simulated titanium bezel */
+        }
+
+        /* --- 3. UTILITY CLASSES (The Premium Feel) --- */
+
+        /* Glassmorphism Effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .text-muted { color: var(--text-muted); font-size: 0.9rem; }
+        .text-bold { font-weight: 600; }
+        .flex-row { display: flex; align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+
+        /* --- 4. COMPONENT STYLES --- */
+
+        /* Header */
+        .header {
+            padding: 60px 24px 20px; /* Top padding for Dynamic Island */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Map Area */
+        .map-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70%;
+            background: url('https://placehold.co/400x600/12121a/3b82f6?text=Map+Layer'); /* Placeholder */
+            background-size: cover;
+            z-index: 0;
+        }
+
+        /* Radar Overlay (Simulated) */
+        .radar-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 60% 40%, rgba(59, 130, 246, 0.4), transparent 50%);
+            mix-blend-mode: screen;
+        }
+
+        /* Controls */
+        .radar-controls {
+            position: absolute;
+            top: 120px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .control-pill {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border: 1px solid var(--glass-border);
+        }
+
+        .control-pill span.active {
+            color: var(--text-white);
+            font-weight: 600;
+        }
+
+        /* Bottom Sheet */
+        .weather-sheet {
+            position: absolute;
+            bottom: 100px; /* Space for nav bar */
+            left: 16px;
+            right: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .temp-row { display: flex; align-items: center; gap: 16px; }
+        .temp-big { font-size: 4rem; font-weight: 500; letter-spacing: -2px; line-height: 1; }
+
+        .alert-row {
+            border-left: 3px solid var(--accent-blue);
+            padding-left: 12px;
+            margin: 8px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 16px;
+            margin-top: 8px;
+        }
+
+        /* Navigation Bar */
+        .nav-bar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 90px;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(30px);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-around;
+            padding-top: 16px;
+            z-index: 20;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .nav-item.active { color: var(--accent-blue); }
+
+        /* Active Pill Indicator */
+        .nav-item.active::after {
+            content: '';
+            width: 30px;
+            height: 4px;
+            background: var(--accent-blue);
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--accent-glow);
+            margin-top: 4px;
+        }
+
+        /* --- 5. ADDITIONAL COMPONENTS --- */
+
+        /* Primary CTA Button (Onboarding) */
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #2563eb, #1d4ed8);
+        }
+
+        /* Secondary/Ghost Button */
+        .btn-secondary {
+            width: 100%;
+            padding: 16px;
+            background: transparent;
+            border: none;
+            color: var(--accent-blue);
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        /* Toggle Switch */
+        .toggle {
+            width: 51px;
+            height: 31px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle.active {
+            background: var(--accent-blue);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 27px;
+            height: 27px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+
+        .toggle.active::after {
+            transform: translateX(20px);
+        }
+
+        /* Settings Row */
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Segmented Control */
+        .segmented-control {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .segment {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .segment.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        /* Search Input */
+        .search-input {
+            width: 100%;
+            padding: 14px 16px 14px 44px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-white);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        /* Location Card */
+        .location-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+        }
+
+        .location-card.highlighted {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        /* Pricing Card */
+        .pricing-card {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+
+        .pricing-card.selected {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid var(--accent-blue);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .pricing-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--accent-blue);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.05));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: var(--radius-md);
+        }
+
+        .alert-banner.severe {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.05));
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Forecast Day Row */
+        .forecast-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .forecast-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Rain Chance Indicator */
+        .rain-chance {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--accent-blue);
+            font-size: 0.85rem;
+        }
+
+        /* Onboarding Icon Container */
+        .icon-glow {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+            border-radius: 20px;
+        }
+
+        /* Feature List Item */
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+        }
+
+        .feature-item .checkmark {
+            color: var(--accent-blue);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- ========================================
+         MAIN RADAR SCREEN
+         ======================================== -->
+    <div class="iphone-frame">
+
+        <header class="header">
+            <div class="flex-row">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+                <span style="font-size: 1.2rem; font-weight: 600; margin-left: 8px;">Sydney</span>
+            </div>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a0a0b0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </header>
+
+        <div class="map-container">
+            <div class="radar-overlay"></div>
+            <div style="position: absolute; top: 50%; left: 60%; width: 16px; height: 16px; background: #3b82f6; border-radius: 50%; border: 3px solid rgba(59, 130, 246, 0.3); box-shadow: 0 0 20px #3b82f6;"></div>
+        </div>
+
+        <div class="radar-controls">
+            <div class="control-pill flex-row" style="gap: 10px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <div style="width: 100px; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; position: relative;">
+                    <div style="width: 60%; height: 100%; background: #3b82f6; border-radius: 2px;"></div>
+                    <div style="width: 8px; height: 8px; background: white; border-radius: 50%; position: absolute; top: -2.5px; left: 60%;"></div>
+                </div>
+                <span>Updated 2m ago</span>
+            </div>
+        </div>
+
+        <div class="glass-card weather-sheet">
+            <div class="flex-row justify-between">
+                <div class="temp-row">
+                    <div class="temp-big">23°</div>
+                    <div>
+                        <div class="text-bold">Now</div>
+                        <div class="text-muted">Partly Cloudy</div>
+                        <div class="text-muted" style="font-size: 0.8rem;">Feels like 25°</div>
+                    </div>
+                </div>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+            </div>
+
+            <div class="alert-row">
+                <div class="text-white" style="font-size: 0.95rem;">🌧️ Light rain arriving in ~12 minutes</div>
+            </div>
+
+            <div class="stats-grid">
+                <div>
+                    <div class="text-muted">Humidity</div>
+                    <div class="text-bold">65%</div>
+                </div>
+                <div>
+                    <div class="text-muted">Wind</div>
+                    <div class="text-bold">12km/h NE</div>
+                </div>
+                <div>
+                    <div class="text-muted">UV Index</div>
+                    <div class="text-bold">6</div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="nav-bar">
+            <div class="nav-item active">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                <span>Radar</span>
+            </div>
+            <div class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>Forecast</span>
+            </div>
+            <div class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Settings</span>
+            </div>
+        </nav>
+
+    </div>
+
+</body>
+</html>
+
+<!--
+========================================
+COMPONENT SNIPPETS FOR OTHER SCREENS
+========================================
+
+1. HOURLY FORECAST ROW (Horizontal Scroll)
+Use this inside the .weather-sheet div for the Forecast screen.
+
+<div class="hourly-scroll" style="display: flex; overflow-x: auto; gap: 12px; padding-bottom: 10px;">
+    <div class="glass-card" style="min-width: 70px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; border: 1px solid var(--accent-blue); background: rgba(59, 130, 246, 0.1);">
+        <span class="text-bold">Now</span>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#fbbf24" stroke="none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="#fbbf24" stroke-width="2"/><line x1="12" y1="21" x2="12" y2="23" stroke="#fbbf24" stroke-width="2"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="#fbbf24" stroke-width="2"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="#fbbf24" stroke-width="2"/><line x1="1" y1="12" x2="3" y2="12" stroke="#fbbf24" stroke-width="2"/><line x1="21" y1="12" x2="23" y2="12" stroke="#fbbf24" stroke-width="2"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="#fbbf24" stroke-width="2"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="#fbbf24" stroke-width="2"/></svg>
+        <span class="text-bold">23°</span>
+        <span class="rain-chance">💧 0%</span>
+    </div>
+    <div class="glass-card" style="min-width: 70px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <span class="text-muted">3 PM</span>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+        <span class="text-bold">22°</span>
+        <span class="rain-chance">💧 20%</span>
+    </div>
+</div>
+
+
+2. 7-DAY FORECAST ROW
+<div class="forecast-row">
+    <span style="width: 100px;">Today</span>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="#fbbf24" stroke="none"><circle cx="12" cy="12" r="5"/></svg>
+    <span style="color: var(--text-muted);">Sunny</span>
+    <span class="text-bold">26°<span class="text-muted">/18°</span></span>
+    <span class="rain-chance">💧 0%</span>
+</div>
+
+
+3. WELCOME/ONBOARDING SCREEN STRUCTURE
+<div class="iphone-frame" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;">
+    <div class="icon-glow" style="margin-bottom: 24px;">
+        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="6"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+    </div>
+    <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 8px;">RadarPro</h1>
+    <p class="text-muted" style="margin-bottom: 40px;">Australia's fastest weather radar</p>
+
+    <div style="width: 100%; max-width: 280px; margin-bottom: 40px;">
+        <div class="feature-item">
+            <span class="checkmark">✓</span>
+            <span>Real-time BOM radar</span>
+        </div>
+        <div class="feature-item">
+            <span class="checkmark">✓</span>
+            <span>Rain alerts before it hits</span>
+        </div>
+        <div class="feature-item">
+            <span class="checkmark">✓</span>
+            <span>7-day forecasts</span>
+        </div>
+    </div>
+
+    <button class="btn-primary">Get Started</button>
+    <p class="text-muted" style="font-size: 0.75rem; margin-top: 16px;">Terms of Service and Privacy Policy</p>
+</div>
+
+
+4. LOCATION PERMISSION SCREEN
+<div class="iphone-frame" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;">
+    <div class="icon-glow" style="margin-bottom: 24px;">
+        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+    </div>
+    <h1 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 12px;">Enable Location</h1>
+    <p class="text-muted" style="margin-bottom: 40px; max-width: 280px;">RadarPro uses your location to show the nearest weather radar and deliver accurate local forecasts.</p>
+
+    <div class="glass-card" style="width: 100%; height: 200px; margin-bottom: 24px; display: flex; align-items: center; justify-content: center;">
+        <div style="width: 16px; height: 16px; background: var(--accent-blue); border-radius: 50%; box-shadow: 0 0 20px var(--accent-blue);"></div>
+    </div>
+
+    <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 24px;">🔒 Your location is never shared or stored.</p>
+
+    <button class="btn-primary">Enable Location</button>
+    <button class="btn-secondary">Maybe Later</button>
+</div>
+
+
+5. NOTIFICATION PERMISSION SCREEN
+<div class="iphone-frame" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;">
+    <div class="icon-glow" style="margin-bottom: 24px;">
+        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+    </div>
+    <h1 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 12px;">Never Get Caught<br>in the Rain</h1>
+    <p class="text-muted" style="margin-bottom: 32px; max-width: 280px;">Get notified 15-30 minutes before rain arrives at your location.</p>
+
+    <div class="glass-card" style="padding: 16px; margin-bottom: 32px; display: flex; align-items: center; gap: 12px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="6"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+        <div style="text-align: left;">
+            <div class="text-bold" style="font-size: 0.9rem;">Rain Alert</div>
+            <div class="text-muted" style="font-size: 0.8rem;">Light rain arriving in ~12 minutes</div>
+        </div>
+        <span class="text-muted" style="font-size: 0.75rem;">now</span>
+    </div>
+
+    <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 24px;">You can adjust alert preferences anytime in Settings</p>
+
+    <button class="btn-primary">Enable Notifications</button>
+    <button class="btn-secondary">Skip for Now</button>
+</div>
+
+
+6. CHOOSE LOCATION SCREEN
+<div class="iphone-frame" style="padding: 60px 20px 20px;">
+    <h1 style="font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 24px;">Choose Location</h1>
+
+    <div style="position: relative; margin-bottom: 16px;">
+        <svg style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%);" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" class="search-input" placeholder="Search suburb or city...">
+    </div>
+
+    <div class="location-card highlighted" style="margin-bottom: 24px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+        <span>Use my current location</span>
+        <svg style="margin-left: auto;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </div>
+
+    <h3 class="text-muted" style="font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 12px;">SAVED LOCATIONS</h3>
+    <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+        <div class="location-card highlighted" style="flex: 1; flex-direction: column; align-items: flex-start;">
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 4px;">
+                <span>🏠</span>
+                <span style="color: var(--accent-blue);">★</span>
+            </div>
+            <span class="text-bold">Home</span>
+            <span class="text-muted" style="font-size: 0.8rem;">Sydney CBD</span>
+        </div>
+        <div class="location-card" style="flex: 1; flex-direction: column; align-items: flex-start;">
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 4px;">
+                <span>🏢</span>
+                <span class="text-muted">☆</span>
+            </div>
+            <span class="text-bold">Work</span>
+            <span class="text-muted" style="font-size: 0.8rem;">Parramatta</span>
+        </div>
+    </div>
+
+    <a href="#" style="color: var(--accent-blue); font-size: 0.9rem;">+ Add new location</a>
+
+    <h3 class="text-muted" style="font-size: 0.75rem; letter-spacing: 1px; margin: 24px 0 12px;">POPULAR CITIES</h3>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="settings-row" style="padding: 12px 0;">
+            <span>📍 Melbourne</span>
+        </div>
+        <div class="settings-row" style="padding: 12px 0;">
+            <span>📍 Brisbane</span>
+        </div>
+        <div class="settings-row" style="padding: 12px 0;">
+            <span>📍 Perth</span>
+        </div>
+    </div>
+</div>
+
+
+7. SETTINGS SCREEN
+<div class="iphone-frame" style="padding: 60px 20px 20px;">
+    <div style="display: flex; align-items: center; margin-bottom: 24px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <h1 style="font-size: 1.5rem; font-weight: 700; margin-left: 12px;">Settings</h1>
+    </div>
+
+    <h3 class="text-muted" style="font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 8px;">DISPLAY</h3>
+    <div class="settings-row">
+        <span>Temperature</span>
+        <div class="segmented-control">
+            <span class="segment active">°C</span>
+            <span class="segment">°F</span>
+        </div>
+    </div>
+    <div class="settings-row">
+        <span>Wind Speed</span>
+        <div class="segmented-control">
+            <span class="segment active">km/h</span>
+            <span class="segment">mph</span>
+        </div>
+    </div>
+    <div class="settings-row">
+        <span>Dark Mode</span>
+        <div class="toggle active"></div>
+    </div>
+
+    <h3 class="text-muted" style="font-size: 0.75rem; letter-spacing: 1px; margin: 24px 0 8px;">NOTIFICATIONS</h3>
+    <div class="settings-row">
+        <span>Rain Alerts</span>
+        <div class="toggle active"></div>
+    </div>
+    <div class="settings-row">
+        <span>Severe Weather Warnings</span>
+        <div class="toggle active"></div>
+    </div>
+    <div class="settings-row">
+        <span>Daily Forecast</span>
+        <div class="toggle"></div>
+    </div>
+
+    <h3 class="text-muted" style="font-size: 0.75rem; letter-spacing: 1px; margin: 24px 0 8px;">ACCOUNT</h3>
+    <div class="settings-row" style="background: rgba(59, 130, 246, 0.1); margin: 0 -20px; padding: 16px 20px; border-radius: var(--radius-sm);">
+        <span style="color: var(--accent-blue);">⭐ Upgrade to Pro</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </div>
+</div>
+
+
+8. PRO UPGRADE SCREEN
+<div class="iphone-frame" style="padding: 60px 20px 20px; display: flex; flex-direction: column;">
+    <div style="display: flex; align-items: center; margin-bottom: 24px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <h1 style="font-size: 1.3rem; font-weight: 600; margin-left: 12px;">Upgrade to Pro</h1>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 24px;">
+        <div style="font-size: 3rem; margin-bottom: 8px;">⭐</div>
+        <h2 style="font-size: 1.8rem; font-weight: 700;">RadarPro <span style="color: var(--accent-blue);">PRO</span></h2>
+        <p class="text-muted">Unlock the full power of weather intelligence</p>
+    </div>
+
+    <div class="glass-card" style="padding: 20px; margin-bottom: 24px;">
+        <div class="feature-item">
+            <span class="checkmark">✓</span>
+            <span>Ad-free experience</span>
+        </div>
+        <div class="feature-item">
+            <span class="checkmark">✓</span>
+            <span>Lightning strike map</span>
+        </div>
+        <div class="feature-item">
+            <span class="checkmark">✓</span>
+            <span>Rain arrival alerts</span>
+        </div>
+        <div class="feature-item">
+            <span class="checkmark">✓</span>
+            <span>Historical radar playback</span>
+        </div>
+        <div class="feature-item">
+            <span class="checkmark">✓</span>
+            <span>Unlimited saved locations</span>
+        </div>
+        <div class="feature-item">
+            <span class="checkmark">✓</span>
+            <span>Storm tracking overlay</span>
+        </div>
+        <div class="feature-item">
+            <span class="checkmark">✓</span>
+            <span>Priority weather updates</span>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+        <div class="pricing-card selected" style="flex: 1;">
+            <div class="pricing-badge">BEST VALUE</div>
+            <div class="text-bold" style="font-size: 1.1rem;">Annual</div>
+            <div style="font-size: 1.8rem; font-weight: 700;">$39.99<span class="text-muted" style="font-size: 0.9rem;">/year</span></div>
+            <div style="color: #22c55e; font-size: 0.8rem;">Save 33%</div>
+        </div>
+        <div class="pricing-card" style="flex: 1;">
+            <div class="text-bold" style="font-size: 1.1rem; margin-top: 24px;">Monthly</div>
+            <div style="font-size: 1.8rem; font-weight: 700;">$4.99<span class="text-muted" style="font-size: 0.9rem;">/month</span></div>
+        </div>
+    </div>
+
+    <button class="btn-primary" style="margin-bottom: 12px;">Start 7-Day Free Trial</button>
+    <p class="text-muted" style="text-align: center; font-size: 0.75rem;">7-day free trial, then $39.99/year<br>Cancel anytime.</p>
+    <button class="btn-secondary">Restore Purchases</button>
+</div>
+
+
+9. SEVERE WEATHER ALERT MODAL
+<div class="glass-card" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 350px; padding: 0; overflow: hidden;">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
+        <span></span>
+        <span class="text-bold">Weather Alert</span>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </div>
+
+    <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(239, 68, 68, 0.2)); padding: 20px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 50px; height: 50px; background: var(--warning-orange); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">⚠️</div>
+            <div>
+                <div class="text-bold" style="font-size: 1.1rem;">SEVERE THUNDERSTORM<br>WARNING</div>
+                <div class="text-muted" style="font-size: 0.85rem;">Issued: 2:34 PM<br>Expires: 5:00 PM</div>
+            </div>
+        </div>
+    </div>
+
+    <div style="padding: 20px;">
+        <h4 class="text-muted" style="font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 8px;">AFFECTED AREAS</h4>
+        <p style="margin-bottom: 16px;">Sydney Metropolitan, Blue Mountains, Illawarra, Central Coast</p>
+
+        <h4 class="text-muted" style="font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 8px;">DETAILS</h4>
+        <p style="margin-bottom: 20px; font-size: 0.95rem;">Severe thunderstorms are likely to produce damaging winds, large hailstones and heavy rainfall that may lead to flash flooding in the warning area over the coming hours.</p>
+
+        <h4 class="text-muted" style="font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 12px;">RECOMMENDED ACTIONS</h4>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span>🏠</span>
+                <span style="font-size: 0.9rem;">Move indoors and away from windows</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span>🔒</span>
+                <span style="font-size: 0.9rem;">Secure loose outdoor items</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span>🚗</span>
+                <span style="font-size: 0.9rem;">Avoid driving if possible</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span>📻</span>
+                <span style="font-size: 0.9rem;">Stay informed via radio or official sources</span>
+            </div>
+        </div>
+
+        <button class="btn-primary">View on Radar</button>
+        <p class="text-muted" style="text-align: center; font-size: 0.75rem; margin-top: 12px;">Source: Bureau of Meteorology</p>
+    </div>
+</div>
+
+-->
