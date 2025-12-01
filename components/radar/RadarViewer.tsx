@@ -68,6 +68,8 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
 
   // Handle range change
   const handleRangeChange = (newRange: string) => {
+    console.log("RadarViewer handleRangeChange called with:", newRange);
+    console.log("Current range:", range, "-> New range:", newRange);
     setRange(newRange as "64" | "128" | "256" | "512");
   };
 
