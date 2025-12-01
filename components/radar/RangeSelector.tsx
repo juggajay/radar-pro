@@ -10,6 +10,11 @@ interface RangeSelectorProps {
 }
 
 export function RangeSelector({ value, onChange }: RangeSelectorProps) {
+  const handleClick = (range: string) => {
+    console.log("Range button clicked:", range);
+    onChange(range);
+  };
+
   return (
     <div
       className="flex rounded-full p-1 border border-white/10"
@@ -23,9 +28,9 @@ export function RangeSelector({ value, onChange }: RangeSelectorProps) {
         <button
           key={range}
           type="button"
-          onClick={() => onChange(range)}
+          onClick={() => handleClick(range)}
           className={cn(
-            "relative px-3.5 py-1.5 text-sm rounded-full transition-all duration-200 cursor-pointer z-10",
+            "relative px-3.5 py-1.5 text-sm rounded-full transition-all duration-200 cursor-pointer",
             value === range
               ? "text-white font-medium bg-gradient-to-br from-[#3b82f6] to-[#2563eb] shadow-[0_2px_8px_rgba(59,130,246,0.4)]"
               : "text-white/50 hover:text-white/80"
