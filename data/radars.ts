@@ -237,3 +237,30 @@ export function parseRadarId(radarId: string): { baseId: string; rangeKm: 64 | 1
 
 // Default range for initial display
 export const DEFAULT_RANGE: 64 | 128 | 256 | 512 = 256
+
+// Get the nearest radar station to a given location
+export function getRadarForLocation(lat: number, lng: number): RadarStation {
+  let nearest: RadarStation | null = null
+  let minDistance = Infinity
+
+  for (const station of RADAR_STATIONS) {
+    // Simple Euclidean distance (good enough for Australia)
+    const dLat = lat - station.lat
+    const dLng = lng - station.lng
+    const distance = Math.sqrt(dLat * dLat + dLng * dLng)
+
+    if (distance < minDistance) {
+      minDistance = distance
+      nearest = station
+    }
+  }
+
+  // Default to Sydney if somehow no match
+  return nearest || RADAR_STATIONS[0]
+}
+
+// Get radar station by full radar ID (e.g., IDR713)
+export function getStationByRadarId(radarId: string): RadarStation | undefined {
+  const { baseId } = parseRadarId(radarId)
+  return RADAR_STATIONS.find(s => s.id === baseId)
+}

@@ -1,4 +1,5 @@
 import { Redis } from '@upstash/redis'
+import { createCanvas, loadImage } from 'canvas'
 
 // Initialize Redis client
 const redis = new Redis({
@@ -276,4 +277,74 @@ export async function clearRadarCache(radarId: string): Promise<void> {
   ]
 
   await Promise.all(keys.map(key => redis.del(key)))
+}
+
+// Frame with parsed image data for prediction algorithm
+export interface RadarFrameWithData {
+  timestamp: number // Unix timestamp in ms
+  imageData: Uint8ClampedArray
+}
+
+// Get radar frames with actual image pixel data for rain prediction
+export async function getRadarFramesWithImageData(
+  radarId: string,
+  count: number = 6
+): Promise<RadarFrameWithData[]> {
+  const timestamps = generateFrameTimestamps()
+  const frames: RadarFrameWithData[] = []
+
+  // Fetch frames in parallel
+  const framePromises = timestamps.slice(-count).map(async (ts) => {
+    try {
+      // Try timestamped PNG first
+      let url = `${BOM_RADAR_URL}/${radarId}.T.${ts}.png`
+      let buffer = await fetchFromBOM(url)
+
+      // Fall back to trying a slightly earlier timestamp (BOM timing can be off)
+      if (!buffer) {
+        const adjustedTs = adjustTimestamp(ts, -6)
+        url = `${BOM_RADAR_URL}/${radarId}.T.${adjustedTs}.png`
+        buffer = await fetchFromBOM(url)
+      }
+
+      if (!buffer) {
+        return null
+      }
+
+      // Load image and extract pixel data
+      const img = await loadImage(Buffer.from(buffer))
+      const canvas = createCanvas(512, 512)
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, 512, 512)
+      const imageData = ctx.getImageData(0, 0, 512, 512)
+
+      return {
+        timestamp: timestampToLocalTime(ts).getTime(),
+        imageData: imageData.data,
+      }
+    } catch (error) {
+      console.error(`Failed to process frame ${ts}:`, error)
+      return null
+    }
+  })
+
+  const results = await Promise.all(framePromises)
+
+  // Filter out failed frames and sort by timestamp
+  for (const result of results) {
+    if (result) {
+      frames.push(result)
+    }
+  }
+
+  frames.sort((a, b) => a.timestamp - b.timestamp)
+
+  return frames
+}
+
+// Helper to adjust timestamp by minutes
+function adjustTimestamp(ts: string, minutesDelta: number): string {
+  const date = timestampToLocalTime(ts)
+  date.setMinutes(date.getMinutes() + minutesDelta)
+  return formatTimestamp(date)
 }
