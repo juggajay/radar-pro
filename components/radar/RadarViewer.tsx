@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { RangeSelector } from "./RangeSelector";
+import { RadarModeToggle } from "./RadarModeToggle";
+import { RadarTimeline } from "./RadarTimeline";
 import { getRadarIdForRange, parseRadarId } from "@/data/radars";
+import { usePredictiveRadar } from "@/hooks/usePredictiveRadar";
 
 interface RadarViewerProps {
   radarId: string;
@@ -18,11 +21,19 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
   const [imageKey, setImageKey] = useState(0);
   const [currentTime, setCurrentTime] = useState("--:--");
 
+  // Prediction mode state
+  const [mode, setMode] = useState<"live" | "predict">("live");
+  const [frameIndex, setFrameIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Calculate full radar ID with range
   const { baseId } = parseRadarId(initialRadarId);
   const radarId = getRadarIdForRange(baseId, parseInt(range) as 64 | 128 | 256 | 512);
+
+  // Fetch predicted frames
+  const { data: predictData, isLoading: predictLoading } = usePredictiveRadar(radarId);
 
   // Reset loading state when radar ID changes
   useEffect(() => {
@@ -66,10 +77,26 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
     return () => clearInterval(interval);
   }, []);
 
+  // Reset frame index when mode changes
+  useEffect(() => {
+    setFrameIndex(0);
+    setIsPlaying(false);
+  }, [mode]);
+
+  // Auto-play animation
+  useEffect(() => {
+    if (!isPlaying || mode !== "predict" || !predictData) return;
+
+    const totalFrames = predictData.frames.length;
+    const interval = setInterval(() => {
+      setFrameIndex(prev => (prev + 1) % totalFrames);
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, mode, predictData]);
+
   // Handle range change
   const handleRangeChange = (newRange: string) => {
-    console.log("RadarViewer handleRangeChange called with:", newRange);
-    console.log("Current range:", range, "-> New range:", newRange);
     setRange(newRange as "64" | "128" | "256" | "512");
   };
 
@@ -84,6 +111,15 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
       setIsLoading(false);
     }
   };
+
+  // Get frame labels for timeline
+  const frameLabels = predictData?.frames.map(f => `+${f.minutesAhead} min`) || [];
+
+  // Current predicted frame URL
+  const predictedFrameUrl = mode === "predict" && predictData?.frames[frameIndex]?.url;
+
+  // Current confidence
+  const confidence = mode === "predict" ? predictData?.frames[frameIndex]?.confidence : undefined;
 
   return (
     <div
@@ -112,7 +148,9 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
         <div
           className="absolute inset-0"
           style={{
-            background: "radial-gradient(ellipse at center, rgba(59, 130, 246, 0.06) 0%, transparent 50%)",
+            background: mode === "predict"
+              ? "radial-gradient(ellipse at center, rgba(139, 92, 246, 0.06) 0%, transparent 50%)"
+              : "radial-gradient(ellipse at center, rgba(59, 130, 246, 0.06) 0%, transparent 50%)",
           }}
         />
       </div>
@@ -130,7 +168,9 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
           <div
             className="absolute -inset-1 rounded-2xl pointer-events-none"
             style={{
-              background: "linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.05) 50%, rgba(59, 130, 246, 0.15) 100%)",
+              background: mode === "predict"
+                ? "linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(139, 92, 246, 0.15) 100%)"
+                : "linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.05) 50%, rgba(59, 130, 246, 0.15) 100%)",
               filter: "blur(10px)",
             }}
           />
@@ -139,7 +179,9 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
           <div
             className="absolute inset-0 rounded-2xl overflow-hidden"
             style={{
-              boxShadow: "inset 0 0 60px rgba(0,0,0,0.6), 0 0 30px rgba(59, 130, 246, 0.1)",
+              boxShadow: mode === "predict"
+                ? "inset 0 0 60px rgba(0,0,0,0.6), 0 0 30px rgba(139, 92, 246, 0.1)"
+                : "inset 0 0 60px rgba(0,0,0,0.6), 0 0 30px rgba(59, 130, 246, 0.1)",
             }}
           >
             {/* Background terrain layer - enhanced */}
@@ -167,21 +209,36 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
               draggable={false}
             />
 
-            {/* BOM Animated Radar GIF - Enhanced with filters */}
-            <img
-              key={`radar-${radarId}-${imageKey}`}
-              src={`/api/radar/${radarId}?type=current&t=${imageKey}`}
-              alt="Weather Radar"
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-              style={{
-                opacity: layersLoaded.radar ? 1 : 0,
-                filter: "saturate(1.3) contrast(1.15) brightness(1.05)",
-                mixBlendMode: "screen",
-              }}
-              onLoad={() => handleLayerLoad('radar')}
-              onError={() => handleLayerError('radar')}
-              draggable={false}
-            />
+            {/* Live Radar or Predicted Frame */}
+            {mode === "live" ? (
+              <img
+                key={`radar-${radarId}-${imageKey}`}
+                src={`/api/radar/${radarId}?type=current&t=${imageKey}`}
+                alt="Weather Radar"
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+                style={{
+                  opacity: layersLoaded.radar ? 1 : 0,
+                  filter: "saturate(1.3) contrast(1.15) brightness(1.05)",
+                  mixBlendMode: "screen",
+                }}
+                onLoad={() => handleLayerLoad('radar')}
+                onError={() => handleLayerError('radar')}
+                draggable={false}
+              />
+            ) : predictedFrameUrl ? (
+              <img
+                key={`predict-${radarId}-${frameIndex}`}
+                src={predictedFrameUrl}
+                alt="Predicted Radar"
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+                style={{
+                  opacity: 0.9,
+                  filter: "saturate(1.3) contrast(1.15) brightness(1.05)",
+                  mixBlendMode: "screen",
+                }}
+                draggable={false}
+              />
+            ) : null}
 
             {/* Locations layer (city names) - enhanced visibility */}
             <img
@@ -213,11 +270,19 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
               <div
                 className="absolute -inset-3 rounded-full animate-ping"
                 style={{
-                  background: "radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)",
+                  background: mode === "predict"
+                    ? "radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%)"
+                    : "radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)",
                   animationDuration: "2s",
                 }}
               />
-              <div className="relative w-2.5 h-2.5 bg-blue-400 rounded-full border border-white/80 shadow-lg shadow-blue-500/50" />
+              <div
+                className={`relative w-2.5 h-2.5 rounded-full border border-white/80 shadow-lg ${
+                  mode === "predict"
+                    ? "bg-purple-400 shadow-purple-500/50"
+                    : "bg-blue-400 shadow-blue-500/50"
+                }`}
+              />
             </div>
           </div>
 
@@ -234,28 +299,64 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
         <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-[#030508] via-[#030508]/50 to-transparent" />
       </div>
 
-      {/* Range selector - top - z-50 to be above loading overlay */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-        <RangeSelector value={range} onChange={handleRangeChange} />
+      {/* Controls row - top */}
+      <div className="absolute top-4 left-0 right-0 z-50 flex flex-col items-center gap-2">
+        {/* Mode Toggle */}
+        <RadarModeToggle
+          mode={mode}
+          onChange={setMode}
+          isLoading={predictLoading}
+        />
+
+        {/* Range selector (live mode only) */}
+        {mode === "live" && (
+          <RangeSelector value={range} onChange={handleRangeChange} />
+        )}
       </div>
 
-      {/* Time and Live indicator - below range selector */}
-      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20">
+      {/* Time and Live/Predict indicator */}
+      <div className="absolute top-28 left-1/2 -translate-x-1/2 z-20">
         <div className="flex items-center gap-3 px-4 py-1.5">
           <span className="text-white/70 text-sm font-medium tabular-nums">
             {currentTime}
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+          {mode === "live" ? (
+            <span className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+              </span>
+              <span className="text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+                Live
+              </span>
             </span>
-            <span className="text-emerald-400 text-xs font-semibold uppercase tracking-wider">
-              Live
+          ) : (
+            <span className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span className="text-purple-400 text-xs font-semibold uppercase tracking-wider">
+                Predicted
+              </span>
             </span>
-          </span>
+          )}
         </div>
       </div>
+
+      {/* Velocity info (predict mode) */}
+      {mode === "predict" && predictData?.velocity && (
+        <div className="absolute top-36 left-1/2 -translate-x-1/2 z-20">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-900/30 border border-purple-500/30">
+            <svg className="w-3.5 h-3.5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+            <span className="text-xs text-purple-300">
+              Moving <span className="font-semibold">{predictData.velocity.compass}</span> at{" "}
+              <span className="font-semibold">{predictData.velocity.speed} km/h</span>
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* City label - bottom right */}
       <div className="absolute bottom-5 right-5 z-20 text-right">
@@ -288,15 +389,30 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
         </div>
       </div>
 
-      {/* Update indicator - bottom center */}
+      {/* Update indicator or Timeline - bottom center */}
       <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20">
-        <span className="text-white/40 text-xs">
-          Updated {lastUpdated}
-        </span>
+        {mode === "live" ? (
+          <span className="text-white/40 text-xs">
+            Updated {lastUpdated}
+          </span>
+        ) : predictData && predictData.frames.length > 0 ? (
+          <div className="w-64">
+            <RadarTimeline
+              mode={mode}
+              frameIndex={frameIndex}
+              totalFrames={predictData.frames.length}
+              onChange={setFrameIndex}
+              isPlaying={isPlaying}
+              onPlayPause={() => setIsPlaying(!isPlaying)}
+              frameLabels={frameLabels}
+              confidence={confidence}
+            />
+          </div>
+        ) : null}
       </div>
 
       {/* Loading state - enhanced */}
-      {isLoading && (
+      {isLoading && mode === "live" && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#030508] z-30">
           <div className="text-center">
             <div className="relative w-20 h-20 mx-auto">
@@ -327,6 +443,31 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
               </div>
             </div>
             <p className="text-white/50 text-sm mt-4 tracking-wide">Loading radar...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Prediction loading */}
+      {predictLoading && mode === "predict" && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#030508]/80 z-30">
+          <div className="text-center">
+            <div className="relative w-20 h-20 mx-auto">
+              <div className="absolute inset-0 border border-purple-500/20 rounded-full" />
+              <div
+                className="absolute inset-0 rounded-full animate-spin"
+                style={{
+                  border: "2px solid transparent",
+                  borderTopColor: "rgba(139, 92, 246, 0.8)",
+                  animationDuration: "1s",
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-white/50 text-sm mt-4 tracking-wide">Generating predictions...</p>
           </div>
         </div>
       )}
