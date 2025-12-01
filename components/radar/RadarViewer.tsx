@@ -16,6 +16,7 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
   const [lastUpdated, setLastUpdated] = useState("--");
   const [layersLoaded, setLayersLoaded] = useState({ bg: false, radar: false, locations: false });
   const [imageKey, setImageKey] = useState(0);
+  const [currentTime, setCurrentTime] = useState("--:--");
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +50,22 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
     return () => clearInterval(interval);
   }, []);
 
+  // Update time on client only (avoids hydration mismatch)
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(
+        new Date().toLocaleTimeString("en-AU", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Australia/Sydney",
+        })
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Handle range change
   const handleRangeChange = (newRange: string) => {
     setRange(newRange as "64" | "128" | "256" | "512");
@@ -65,13 +82,6 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
       setIsLoading(false);
     }
   };
-
-  // Get current time for display
-  const currentTime = new Date().toLocaleTimeString("en-AU", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Australia/Sydney",
-  });
 
   return (
     <div
