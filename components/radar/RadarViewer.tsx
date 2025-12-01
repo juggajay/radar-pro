@@ -234,8 +234,8 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
         <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-[#030508] via-[#030508]/50 to-transparent" />
       </div>
 
-      {/* Range selector - top */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+      {/* Range selector - top - z-50 to be above loading overlay */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
         <RangeSelector value={range} onChange={handleRangeChange} />
       </div>
 
