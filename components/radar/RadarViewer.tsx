@@ -16,7 +16,6 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
   const [lastUpdated, setLastUpdated] = useState("--");
   const [layersLoaded, setLayersLoaded] = useState({ bg: false, radar: false, locations: false });
   const [imageKey, setImageKey] = useState(0);
-  const [scanAngle, setScanAngle] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -47,14 +46,6 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
       setLayersLoaded(prev => ({ ...prev, radar: false }));
     }, 5 * 60 * 1000);
 
-    return () => clearInterval(interval);
-  }, []);
-
-  // Radar sweep animation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setScanAngle(prev => (prev + 1) % 360);
-    }, 30);
     return () => clearInterval(interval);
   }, []);
 
@@ -117,26 +108,26 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
       {/* Radar image container - centered with proper aspect ratio */}
       <div className="absolute inset-0 flex items-center justify-center pt-8">
         <div
-          className="relative rounded-full overflow-hidden"
+          className="relative rounded-2xl overflow-hidden"
           style={{
-            width: "min(85vw, 65vh, 550px)",
-            height: "min(85vw, 65vh, 550px)",
+            width: "min(90vw, 70vh, 580px)",
+            height: "min(90vw, 70vh, 580px)",
           }}
         >
-          {/* Outer ring glow */}
+          {/* Outer glow */}
           <div
-            className="absolute -inset-1 rounded-full pointer-events-none"
+            className="absolute -inset-1 rounded-2xl pointer-events-none"
             style={{
-              background: "linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.1) 50%, rgba(59, 130, 246, 0.2) 100%)",
-              filter: "blur(8px)",
+              background: "linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.05) 50%, rgba(59, 130, 246, 0.15) 100%)",
+              filter: "blur(10px)",
             }}
           />
 
-          {/* Main radar container with circular mask */}
+          {/* Main radar container */}
           <div
-            className="absolute inset-0 rounded-full overflow-hidden"
+            className="absolute inset-0 rounded-2xl overflow-hidden"
             style={{
-              boxShadow: "inset 0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(59, 130, 246, 0.15)",
+              boxShadow: "inset 0 0 60px rgba(0,0,0,0.6), 0 0 30px rgba(59, 130, 246, 0.1)",
             }}
           >
             {/* Background terrain layer - enhanced */}
@@ -195,55 +186,32 @@ export function RadarViewer({ radarId: initialRadarId, cityName }: RadarViewerPr
               draggable={false}
             />
 
-            {/* Animated radar sweep effect */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: `conic-gradient(from ${scanAngle}deg at 50% 50%,
-                  transparent 0deg,
-                  transparent 350deg,
-                  rgba(59, 130, 246, 0.08) 355deg,
-                  rgba(59, 130, 246, 0.15) 358deg,
-                  rgba(59, 130, 246, 0.08) 360deg
-                )`,
-              }}
-            />
-
             {/* Inner vignette for depth */}
             <div
-              className="absolute inset-0 pointer-events-none rounded-full"
+              className="absolute inset-0 pointer-events-none rounded-2xl"
               style={{
-                boxShadow: "inset 0 0 100px rgba(0,0,0,0.5)",
+                boxShadow: "inset 0 0 80px rgba(0,0,0,0.4)",
               }}
             />
           </div>
 
-          {/* Center marker with enhanced pulse */}
+          {/* Center marker with pulse */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
             <div className="relative">
               <div
-                className="absolute -inset-4 rounded-full animate-ping"
+                className="absolute -inset-3 rounded-full animate-ping"
                 style={{
-                  background: "radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%)",
+                  background: "radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)",
                   animationDuration: "2s",
                 }}
               />
-              <div
-                className="absolute -inset-2 rounded-full animate-pulse"
-                style={{
-                  background: "radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)",
-                }}
-              />
-              <div className="relative w-2.5 h-2.5 bg-blue-400 rounded-full border border-white/80 shadow-lg shadow-blue-500/60" />
+              <div className="relative w-2.5 h-2.5 bg-blue-400 rounded-full border border-white/80 shadow-lg shadow-blue-500/50" />
             </div>
           </div>
 
-          {/* Circular border ring */}
+          {/* Border */}
           <div
-            className="absolute inset-0 rounded-full pointer-events-none border border-blue-500/20"
-            style={{
-              boxShadow: "inset 0 0 1px rgba(59, 130, 246, 0.5)",
-            }}
+            className="absolute inset-0 rounded-2xl pointer-events-none border border-white/10"
           />
         </div>
       </div>
